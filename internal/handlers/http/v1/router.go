@@ -12,7 +12,7 @@ import (
 )
 
 func NewRouter(
-	productUC *usecases.ProductUseCase,
+	citizenReportUC *usecases.CitizenReportUseCase,
 	db *sql.DB,
 	redisClient *redis.Client,
 	rateLimit int,
@@ -34,16 +34,16 @@ func NewRouter(
 
 	// API routes
 	r.Route("/api/v1", func(r chi.Router) {
-		productHandler := NewProductHandler(productUC)
+		cReportHandler := NewCitizenReportHandler(citizenReportUC)
 
-		r.Route("/products", func(r chi.Router) {
-			r.Post("/", productHandler.CreateProduct)
-			r.Get("/", productHandler.ListProducts)
+		r.Route("/citizen-reports", func(r chi.Router) {
+			r.Post("/", cReportHandler.CreateCitizenReport)
+			r.Get("/", cReportHandler.ListCitizenReports)
 
 			r.Route("/{id}", func(r chi.Router) {
-				r.Get("/", productHandler.GetProduct)
-				r.Put("/", productHandler.UpdateProduct)
-				r.Delete("/", productHandler.DeleteProduct)
+				r.Get("/", cReportHandler.GetCitizenReport)
+				r.Put("/", cReportHandler.UpdateCitizenReport)
+				r.Delete("/", cReportHandler.DeleteCitizenReport)
 			})
 		})
 	})

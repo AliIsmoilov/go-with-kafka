@@ -61,7 +61,7 @@ func NewProducerWithAuth(brokers []string, topic, username, password string) *Pr
 	}
 }
 
-func (p *Producer) SendProductEvent(ctx context.Context, event *models.ProductEvent) error {
+func (p *Producer) SendCitizenReportEvent(ctx context.Context, event *models.CitizenReportEvent) error {
 	event.ProducerID = p.producerID
 	event.Sequence = time.Now().UnixNano()
 
@@ -71,7 +71,7 @@ func (p *Producer) SendProductEvent(ctx context.Context, event *models.ProductEv
 	}
 
 	msg := kafka.Message{
-		Key:   []byte(fmt.Sprintf("product-%d", event.ProductID)),
+		Key:   []byte(fmt.Sprintf("citizen-report-%v", event.ReportID)),
 		Value: eventData,
 		Headers: []kafka.Header{
 			{

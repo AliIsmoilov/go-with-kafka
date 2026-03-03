@@ -17,6 +17,7 @@ import (
 	"hakathon-mvp/internal/pkg/database"
 	"hakathon-mvp/internal/pkg/logger"
 	"hakathon-mvp/internal/pkg/metrics"
+
 	redis2 "github.com/redis/go-redis/v9"
 )
 
@@ -57,8 +58,8 @@ func main() {
 	}(redisClient)
 
 	// repo init
-	productRepo := postgres.NewProductRepository(db)
-	productCache := redis.NewProductCache(redisClient, cfg.Redis.TTL)
+	citizenRepo := postgres.NewCitizenReportRepository(db)
+	citizenCache := redis.NewCitizenReportCache(redisClient, cfg.Redis.TTL)
 
 	// kafka consumer
 	consumer := kafka.NewConsumer(
@@ -68,8 +69,8 @@ func main() {
 		100,                  // batchSize
 		100*time.Millisecond, // batchTimeout
 	)
-	consumer.SetProductRepo(productRepo)
-	consumer.SetCache(productCache)
+	consumer.SetCitizenReportRepo(citizenRepo)
+	consumer.SetCache(citizenCache)
 	defer func(consumer *kafka.Consumer) {
 		err := consumer.Close()
 		if err != nil {

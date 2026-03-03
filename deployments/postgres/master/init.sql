@@ -1,47 +1,23 @@
--- Скрипт выполняется против БД, указанной в POSTGRES_DB (products)
+-- use pgcrypto extension for UUID generation
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
-CREATE TYPE product_type AS ENUM (
-    'clothing_headwear', 'clothing_body', 'clothing_pants', 'clothing_shoes',
-    'food', 'furniture', 'electronics', 'adult', 'home_goods'
+CREATE TABLE IF NOT EXISTS citizen_reports (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    region_id BIGINT NOT NULL,
+    district_id BIGINT NOT NULL,
+    infrastructure_name VARCHAR(255) NOT NULL,
+    sector_id BIGINT NOT NULL,
+    description TEXT,
+    photo_path VARCHAR(500),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Создание таблицы товаров
-CREATE TABLE IF NOT EXISTS products (
-                                        id BIGSERIAL PRIMARY KEY,
-                                        name VARCHAR(255) NOT NULL,
-    weight DECIMAL(10,3) NOT NULL,
-    unit VARCHAR(10) NOT NULL CHECK (unit IN ('g', 'kg', 'l', 'piece')),
-    color VARCHAR(50),
+CREATE INDEX IF NOT EXISTS idx_citizen_reports_region ON citizen_reports(region_id);
+CREATE INDEX IF NOT EXISTS idx_citizen_reports_district ON citizen_reports(district_id);
+CREATE INDEX IF NOT EXISTS idx_citizen_reports_sector ON citizen_reports(sector_id);
 
-    type product_type NOT NULL,
-    price DECIMAL(10,2) NOT NULL CHECK (price >= 0),
-    attributes JSONB NOT NULL DEFAULT '{}',
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-
-    CONSTRAINT valid_weight CHECK (
-(unit = 'piece' AND weight >= 1) OR
-(unit != 'piece' AND weight > 0)
-    )
-    );
-
--- Индексы для фильтрации
-CREATE INDEX IF NOT EXISTS idx_products_type ON products(type);
-CREATE INDEX IF NOT EXISTS idx_products_price ON products(price);
-CREATE INDEX IF NOT EXISTS idx_products_color ON products(color);
-CREATE INDEX IF NOT EXISTS idx_products_created_at ON products(created_at);
-CREATE INDEX IF NOT EXISTS idx_products_attributes ON products USING GIN(attributes);
-
--- Триггер для обновления updated_at
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = NOW();
-RETURN NEW;
-END;
-$$ language 'plpgsql';
-
-CREATE OR REPLACE TRIGGER update_products_updated_at
-    BEFORE UPDATE ON products
-                         FOR EACH ROW
-                         EXECUTE FUNCTION update_updated_at_column();
+CREATE OR REPLACE TRIGGER update_citizen_reports_updated_at
+    BEFORE UPDATE ON citizen_reports
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();

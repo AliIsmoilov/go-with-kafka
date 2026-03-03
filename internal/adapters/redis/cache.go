@@ -11,19 +11,19 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-type ProductCache struct {
+type CitizenReportCache struct {
 	client *redis.Client
 	ttl    time.Duration
 }
 
-func NewProductCache(client *redis.Client, ttl time.Duration) *ProductCache {
-	return &ProductCache{
+func NewCitizenReportCache(client *redis.Client, ttl time.Duration) *CitizenReportCache {
+	return &CitizenReportCache{
 		client: client,
 		ttl:    ttl,
 	}
 }
 
-func (c *ProductCache) Get(ctx context.Context, key string) (*models.Product, error) {
+func (c *CitizenReportCache) Get(ctx context.Context, key string) (*models.CitizenReport, error) {
 	data, err := c.client.Get(ctx, key).Result()
 	if err != nil {
 		if err == redis.Nil {
@@ -32,18 +32,18 @@ func (c *ProductCache) Get(ctx context.Context, key string) (*models.Product, er
 		return nil, fmt.Errorf("failed to get from cache: %w", err)
 	}
 
-	var product models.Product
-	if err := json.Unmarshal([]byte(data), &product); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal product: %w", err)
+	var res models.CitizenReport
+	if err := json.Unmarshal([]byte(data), &res); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal citizen report: %w", err)
 	}
 
-	return &product, nil
+	return &res, nil
 }
 
-func (c *ProductCache) Set(ctx context.Context, key string, product *models.Product) error {
-	data, err := json.Marshal(product)
+func (c *CitizenReportCache) Set(ctx context.Context, key string, citizenReport *models.CitizenReport) error {
+	data, err := json.Marshal(citizenReport)
 	if err != nil {
-		return fmt.Errorf("failed to marshal product: %w", err)
+		return fmt.Errorf("failed to marshal citizen report: %w", err)
 	}
 
 	err = c.client.Set(ctx, key, data, c.ttl).Err()
@@ -54,7 +54,7 @@ func (c *ProductCache) Set(ctx context.Context, key string, product *models.Prod
 	return nil
 }
 
-func (c *ProductCache) Delete(ctx context.Context, key string) error {
+func (c *CitizenReportCache) Delete(ctx context.Context, key string) error {
 	err := c.client.Del(ctx, key).Err()
 	if err != nil {
 		return fmt.Errorf("failed to delete from cache: %w", err)
@@ -62,10 +62,10 @@ func (c *ProductCache) Delete(ctx context.Context, key string) error {
 	return nil
 }
 
-func (c *ProductCache) SetList(ctx context.Context, key string, products []*models.Product) error {
-	data, err := json.Marshal(products)
+func (c *CitizenReportCache) SetList(ctx context.Context, key string, citizenReports []*models.CitizenReport) error {
+	data, err := json.Marshal(citizenReports)
 	if err != nil {
-		return fmt.Errorf("failed to marshal products list: %w", err)
+		return fmt.Errorf("failed to marshal citizen reports list: %w", err)
 	}
 
 	err = c.client.Set(ctx, key, data, c.ttl).Err()
@@ -76,7 +76,7 @@ func (c *ProductCache) SetList(ctx context.Context, key string, products []*mode
 	return nil
 }
 
-func (c *ProductCache) GetList(ctx context.Context, key string) ([]*models.Product, error) {
+func (c *CitizenReportCache) GetList(ctx context.Context, key string) ([]*models.CitizenReport, error) {
 	data, err := c.client.Get(ctx, key).Result()
 	if err != nil {
 		if err == redis.Nil {
@@ -85,7 +85,7 @@ func (c *ProductCache) GetList(ctx context.Context, key string) ([]*models.Produ
 		return nil, fmt.Errorf("failed to get list from cache: %w", err)
 	}
 
-	var products []*models.Product
+	var products []*models.CitizenReport
 	if err := json.Unmarshal([]byte(data), &products); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal products list: %w", err)
 	}

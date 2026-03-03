@@ -15,8 +15,8 @@ import (
 
 type Consumer struct {
 	reader       *kafka.Reader
-	productRepo  repositories.ProductRepository
-	cache        repositories.ProductCache
+	citizenRepo  repositories.CitizenReportRepository
+	cache        repositories.CitizenReportCache
 	batchSize    int
 	batchTimeout time.Duration
 }
@@ -71,11 +71,11 @@ func NewConsumerWithAuth(brokers []string, topic, groupID, username, password st
 	}
 }
 
-func (c *Consumer) SetProductRepo(repo repositories.ProductRepository) {
-	c.productRepo = repo
+func (c *Consumer) SetCitizenReportRepo(repo repositories.CitizenReportRepository) {
+	c.citizenRepo = repo
 }
 
-func (c *Consumer) SetCache(cache repositories.ProductCache) {
+func (c *Consumer) SetCache(cache repositories.CitizenReportCache) {
 	c.cache = cache
 }
 
@@ -103,70 +103,70 @@ func (c *Consumer) Start(ctx context.Context) error {
 }
 
 func (c *Consumer) processMessage(ctx context.Context, msg kafka.Message) error {
-	var event models.ProductEvent
+	var event models.CitizenReportEvent
 	if err := json.Unmarshal(msg.Value, &event); err != nil {
 		return fmt.Errorf("failed to unmarshal event: %w", err)
 	}
 
 	switch event.EventType {
-	case models.ProductCreated:
-		return c.handleProductCreated(ctx, &event)
-	case models.ProductUpdated:
-		return c.handleProductUpdated(ctx, &event)
-	case models.ProductDeleted:
-		return c.handleProductDeleted(ctx, &event)
+	case models.CitizenReportCreated:
+		return c.handleCitizenReportCreated(ctx, &event)
+	case models.CitizenReportUpdated:
+		return c.handleCitizenReportUpdated(ctx, &event)
+	case models.CitizenReportDeleted:
+		return c.handleCitizenReportDeleted(ctx, &event)
 	default:
 		return fmt.Errorf("unknown event type: %s", event.EventType)
 	}
 }
 
-func (c *Consumer) handleProductCreated(ctx context.Context, event *models.ProductEvent) error {
-	if event.ProductData == nil {
-		return fmt.Errorf("product data is nil for create event")
+func (c *Consumer) handleCitizenReportCreated(ctx context.Context, event *models.CitizenReportEvent) error {
+	if event.ReportData == nil {
+		return fmt.Errorf("citizen report data is nil for create event")
 	}
 
-	if err := c.productRepo.Create(ctx, event.ProductData); err != nil {
-		return fmt.Errorf("failed to create product: %w", err)
+	if err := c.citizenRepo.Create(ctx, event.ReportData); err != nil {
+		return fmt.Errorf("failed to create citizen report: %w", err)
 	}
 
-	cacheKey := fmt.Sprintf("product:%d", event.ProductData.ID)
-	if err := c.cache.Set(ctx, cacheKey, event.ProductData); err != nil {
-		fmt.Printf("Failed to cache product %d: %v\n", event.ProductData.ID, err)
+	cacheKey := fmt.Sprintf("citizen-report:%s", event.ReportData.Id.String())
+	if err := c.cache.Set(ctx, cacheKey, event.ReportData); err != nil {
+		fmt.Printf("Failed to cache citizen report %s: %v\n", event.ReportData.Id.String(), err)
 	}
 
-	fmt.Printf("Successfully created product: %d\n", event.ProductData.ID)
+	fmt.Printf("Successfully created citizen report: %s\n", event.ReportData.Id.String())
 	return nil
 }
 
-func (c *Consumer) handleProductUpdated(ctx context.Context, event *models.ProductEvent) error {
-	if event.ProductData == nil {
-		return fmt.Errorf("product data is nil for update event")
+func (c *Consumer) handleCitizenReportUpdated(ctx context.Context, event *models.CitizenReportEvent) error {
+	if event.ReportData == nil {
+		return fmt.Errorf("citizen report data is nil for update event")
 	}
 
-	if err := c.productRepo.Update(ctx, event.ProductData); err != nil {
-		return fmt.Errorf("failed to update product: %w", err)
+	if err := c.citizenRepo.Update(ctx, event.ReportData); err != nil {
+		return fmt.Errorf("failed to update citizen report: %w", err)
 	}
 
-	cacheKey := fmt.Sprintf("product:%d", event.ProductData.ID)
-	if err := c.cache.Set(ctx, cacheKey, event.ProductData); err != nil {
-		fmt.Printf("Failed to cache product %d: %v\n", event.ProductData.ID, err)
+	cacheKey := fmt.Sprintf("citizen-report:%s", event.ReportData.Id.String())
+	if err := c.cache.Set(ctx, cacheKey, event.ReportData); err != nil {
+		fmt.Printf("Failed to cache citizen report %s: %v\n", event.ReportData.Id.String(), err)
 	}
 
-	fmt.Printf("Successfully updated product: %d\n", event.ProductData.ID)
+	fmt.Printf("Successfully updated citizen report: %s\n", event.ReportData.Id.String())
 	return nil
 }
 
-func (c *Consumer) handleProductDeleted(ctx context.Context, event *models.ProductEvent) error {
-	if err := c.productRepo.Delete(ctx, event.ProductID); err != nil {
-		return fmt.Errorf("failed to delete product: %w", err)
+func (c *Consumer) handleCitizenReportDeleted(ctx context.Context, event *models.CitizenReportEvent) error {
+	if err := c.citizenRepo.Delete(ctx, event.ReportID); err != nil {
+		return fmt.Errorf("failed to delete citizen report: %w", err)
 	}
 
-	cacheKey := fmt.Sprintf("product:%d", event.ProductID)
+	cacheKey := fmt.Sprintf("citizen-report:%s", event.ReportData.Id.String())
 	if err := c.cache.Delete(ctx, cacheKey); err != nil {
-		fmt.Printf("Failed to delete product %d from cache: %v\n", event.ProductID, err)
+		fmt.Printf("Failed to delete citizen report %s from cache: %v\n", event.ReportData.Id.String(), err)
 	}
 
-	fmt.Printf("Successfully deleted product: %d\n", event.ProductID)
+	fmt.Printf("Successfully deleted citizen report: %s\n", event.ReportData.Id.String())
 	return nil
 }
 

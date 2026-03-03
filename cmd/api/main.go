@@ -16,7 +16,7 @@ import (
 	"hakathon-mvp/internal/adapters/postgres"
 	"hakathon-mvp/internal/adapters/redis"
 	"hakathon-mvp/internal/domain/services"
-	"hakathon-mvp/internal/handlers/http/v1"
+	v1 "hakathon-mvp/internal/handlers/http/v1"
 	"hakathon-mvp/internal/pkg/cache"
 	"hakathon-mvp/internal/pkg/config"
 	"hakathon-mvp/internal/pkg/database"
@@ -24,6 +24,7 @@ import (
 	"hakathon-mvp/internal/pkg/metrics"
 	vld "hakathon-mvp/internal/pkg/validator"
 	"hakathon-mvp/internal/usecases"
+
 	redis2 "github.com/redis/go-redis/v9"
 )
 
@@ -73,15 +74,15 @@ func main() {
 	}(producer)
 
 	// reps and services
-	productRepo := postgres.NewProductRepository(db)
-	productCache := redis.NewProductCache(redisClient, cfg.Redis.TTL)
-	validator := services.NewProductValidator()
+	citizenRepo := postgres.NewCitizenReportRepository(db)
+	citizenCache := redis.NewCitizenReportCache(redisClient, cfg.Redis.TTL)
+	validator := services.NewCitizenReportValidator()
 
 	// usecases
-	productUC := usecases.NewProductUseCase(productRepo, productCache, producer, (*vld.ProductValidator)(validator))
+	citizenUC := usecases.NewCitizenReportUseCase(citizenRepo, citizenCache, producer, (*vld.CitizenReportValidator)(validator))
 
 	// http server
-	router := v1.NewRouter(productUC, db, redisClient, cfg.Server.RateLimit)
+	router := v1.NewRouter(citizenUC, db, redisClient, cfg.Server.RateLimit)
 
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.Server.Port),
