@@ -2,7 +2,7 @@
 
 The project can be used as a platform for training in performing work tasks. The project has a deliberately poorly designed database subject area. The request path starts with an API written in Golang using SOLID and CLEAN ARCHITECTURE. Upon a successful POST request, the API returns a 202 HTTP status code, and the request goes to a Kafka topic, from where psql-master pulls it and replicates it to psql-replica. The application also uses a Redis cache.
 
-![Go Gopher](https://raw.githubusercontent.com/golang-samples/gopher-vector/master/gopher.png)
+<!-- ![Go Gopher](https://raw.githubusercontent.com/golang-samples/gopher-vector/master/gopher.png) -->
 
 ---
 
